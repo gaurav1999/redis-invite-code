@@ -1,0 +1,20 @@
+{
+  "name": "redis-get-otp",
+  "version": "1.0.0",
+  "description": "Redis Otp Package",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "redis",
+    "otp"
+  ],
+  "author": "agrawalgaurav1999@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "redis": "^4.0.6"
+  },
+  "type": "module"
+}
