@@ -9,11 +9,11 @@ const TIMEOUT = 300;
 let redis = null;
 
 
-//Store otp in redis
-const storeOtp = async(otp, transactionId) => {
-    const otpExist = await redis.get(otp);
-    if(!!otpExist) return false;
-    await redis.set(otp, transactionId, TIMEOUT);
+//Store invite code in redis
+const storeInviteCode = async(inviteCode, resourceId) => {
+    const inviteExists = await redis.get(inviteCode);
+    if(!!inviteExists) return false;
+    await redis.set(inviteCode, resourceId, TIMEOUT);
     return true;
 }
 
@@ -24,23 +24,38 @@ const alphanumeric = (num, res = "") => {
 	return alphanumeric(num - 1, res + PATTERN[random]);
 };
 
-const genereateOtp = async(transactionId) => {
-    let otp = alphanumeric(OTP_LENGTH);
-    while(!!await getOtpTransaction(otp))  {
-        otp = alphanumeric(OTP_LENGTH);
+const generateInviteCode = async(resourceId) => {
+    let inviteCode = alphanumeric(OTP_LENGTH);
+    while(!!await getInviteResource(inviteCode))  {
+        inviteCode = alphanumeric(OTP_LENGTH);
     }
-    return otp;
+    await storeInviteCode(inviteCode, resourceId);
+    return inviteCode;
 }
 
-const getOtpTransaction = async(otp) => {
-    return await redis.get(otp);
+const getInviteResource = async(inviteCode) => {
+    return redis.get(inviteCode);
 }
 
-// const test = async() => {
-//     if(!redis) redis = await getConnection(REDIS_URL);
-//     const otp = await genereateOtp('something');
-//     console.log(otp);
-//     console.log(await getOtpTransaction(otp));
-// }
+const redeemInviteCode = async(inviteCode) => {
+    const resourceId = await getInviteResource(inviteCode);
+    if(!!resourceId) {
+        //Do something to redeem the resource
+        console.log(`consuming resource ... ${resourceId}`);
+        //Explicitly deleting the invite. (Single use only).
+        await redis.del(inviteCode);
+        return true;
+    }
+    console.log("Invite expired or not found");
+    return false;
+}
 
-// test();
+const test = async() => {
+    if(!redis) redis = await getConnection(REDIS_URL);
+    const inviteCode = await generateInviteCode('resource-id');
+    console.log(inviteCode); //Get invite code generated and stored in redis with resource-id as value.
+    await redeemInviteCode(inviteCode);
+    await redeemInviteCode(inviteCode); //Will return false
+}
+
+test();
