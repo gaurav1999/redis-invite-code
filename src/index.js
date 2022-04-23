@@ -11,8 +11,10 @@ let redis = null;
 
 //Store otp in redis
 const storeOtp = async(otp, transactionId) => {
+    const otpExist = await redis.get(otp);
+    if(!!otpExist) return false;
     await redis.set(otp, transactionId, TIMEOUT);
-    return;
+    return true;
 }
 
 const alphanumeric = (num, res = "") => {
@@ -23,20 +25,22 @@ const alphanumeric = (num, res = "") => {
 };
 
 const genereateOtp = async(transactionId) => {
-    const otp = alphanumeric(OTP_LENGTH);
-    await storeOtp(otp, transactionId);
+    let otp = alphanumeric(OTP_LENGTH);
+    while(!!await getOtpTransaction(otp))  {
+        otp = alphanumeric(OTP_LENGTH);
+    }
     return otp;
 }
 
 const getOtpTransaction = async(otp) => {
-    return redis.get(otp);
+    return await redis.get(otp);
 }
 
-const test = async() => {
-    if(!redis) redis = await getConnection(REDIS_URL);
-    const otp = await genereateOtp('something');
-    console.log(otp);
-    console.log(await getOtpTransaction(otp));
-}
+// const test = async() => {
+//     if(!redis) redis = await getConnection(REDIS_URL);
+//     const otp = await genereateOtp('something');
+//     console.log(otp);
+//     console.log(await getOtpTransaction(otp));
+// }
 
-test();
+// test();
