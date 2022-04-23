@@ -2,8 +2,8 @@ import { getConnection } from "./redis-client/index.js";
 
 //Configurables
 const REDIS_URL = 'redis://localhost:6379';
-const PATTERN = 'ABCDEDFGHIJKLMNOPQRSTUVWXYZ123456789abcdedfghijklmnopqrstuvwxyz';
-const OTP_LENGTH = 6;
+const PATTERN = '123456789abcdedfghijklmnopqrstuvwxyzABCDEDFGHIJKLMNOPQRSTUVWXYZ';
+const INVITE_CODE_LENGTH = 8;
 //TIMEOUT in MS
 const TIMEOUT = 300;
 let redis = null;
@@ -17,17 +17,17 @@ const storeInviteCode = async(inviteCode, resourceId) => {
     return true;
 }
 
-const alphanumeric = (num, res = "") => {
+const alphanumericCodeGen = (num, res = "") => {
     if(num > PATTERN.length) return null;
 	if (!num) return res;
 	const random = (Math.random() * (PATTERN.length - 1)).toFixed();
-	return alphanumeric(num - 1, res + PATTERN[random]);
+	return alphanumericCodeGen(num - 1, res + PATTERN[random]);
 };
 
 const generateInviteCode = async(resourceId) => {
-    let inviteCode = alphanumeric(OTP_LENGTH);
+    let inviteCode = alphanumericCodeGen(INVITE_CODE_LENGTH);
     while(!!await getInviteResource(inviteCode))  {
-        inviteCode = alphanumeric(OTP_LENGTH);
+        inviteCode = alphanumericCodeGen(INVITE_CODE_LENGTH);
     }
     await storeInviteCode(inviteCode, resourceId);
     return inviteCode;
